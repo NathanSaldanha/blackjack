@@ -48,7 +48,7 @@
 
 (defn dealer-decision-continue? [player-points dealer]
   (let [dealer-points (:points dealer)]
-    (<= dealer-points player-points)))
+    (if (> player-points 21) false (<= dealer-points player-points))))
 
 ;função game, responsavel por perguntar para o jogador se ele quer mais uma carta
 (defn game [player fn-decision-continue?]
@@ -59,11 +59,30 @@
       (recur player-with-more-cards fn-decision-continue?))
     player))
 
+(defn end-game [player dealer]
+  (let [player-points (:points player)
+        dealer-points (:points dealer)
+        player-name (:player-name player)
+        dealer-name (:player-name dealer)
+        message (cond
+                  (and (> player-points 21) (> dealer-points 21)) "Ambos perderam"
+                  (= player-points dealer-points) "empatou"
+                  (> player-points 21) (str dealer-name " ganhou")
+                  (> dealer-points 21) (str player-name " ganhou")
+                  (> player-points dealer-points) (str player-name " ganhou")
+                  (> dealer-points player-points) (str dealer-name " ganhou"))]
+    (card/print-player player)
+    (card/print-player dealer)
+    (print message)))
+
 (def player-1 (player "Nathan Mariano"))
 (card/print-player player-1)
 
 (def dealer (player "Dealer"))
-(card/print-player dealer)
+(card/print-masked-player dealer)
 
 (def player-after-game (game player-1 player-decision-continue?))
-(game dealer (partial dealer-decision-continue? (:points player-after-game)))
+(def partial-dealer-decision-continue? (partial dealer-decision-continue? (:points player-after-game)))
+(def dealer-after-game (game dealer partial-dealer-decision-continue?))
+
+(end-game player-after-game dealer-after-game)
